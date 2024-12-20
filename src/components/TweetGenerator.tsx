@@ -54,7 +54,7 @@ const TweetGenerator = () => {
         accept: {
             "application/pdf": [".pdf"],
         },
-        maxFiles: 5,
+        maxFiles: 3,
         maxSize: 1024 * 1024 * 4,
         multiple: true,
     };
