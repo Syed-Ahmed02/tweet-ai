@@ -2,6 +2,7 @@
 import React from 'react'
 import { Button } from "@/components/ui/button"
 import { useState } from 'react'
+import { useChat } from 'ai/react';
 import {
     Form,
     FormControl,
@@ -35,48 +36,78 @@ import {
     FileUploaderItem
 } from "@/components/ui/file-upload"
 
-
 const STYLES = ["AIDA", "BAB", "HSO"] as const;
 const formSchema = z.object({
-    username: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
-    }),
     topic: z.string(),
     companyInfo: z.string(),
-
     style: z.enum(STYLES)
 })
 
 const TweetGenerator = () => {
     const [files, setFiles] = useState<File[] | null>(null);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [generatedTweet, setGeneratedTweet] = useState("");
 
     const dropZoneConfig = {
         accept: {
             "application/pdf": [".pdf"],
         },
         maxFiles: 3,
-        maxSize: 1024 * 1024 * 4,
-        multiple: true,
+    maxSize: 1024 * 1024 * 4,        multiple: true,
     };
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            username: "",
             topic: "",
             companyInfo: "",
             style: "AIDA",
         },
     })
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    // const { handleSubmit, handleInputChange } = useChat({
+    //     api: 'api/gemini',
+    //     onFinish: (message) => {
+    //         setError('');
+    //         let generatedTweetContent = message.content;
+    //         //Gets rid of #'s at the end of tweet
+    //         generatedTweetContent = generatedTweetContent.replace(/#[\w]+/g, '');
+    //         setGeneratedTweet(generatedTweetContent);
+    //     },
+    //     onError: (error) => {
+
+    //         setError(`The following error occured ${error}`);
+    //         setLoading(false);
+    //     }
+    // })
+
+
+
+   
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
-        console.log(values)
-        form.reset();
+        //ADd error
+        const res = await fetch("api/gemini",{
+            method:"POST"
+        })
+        setError('');
+        const submissionData = {
+            ...values,
+            files: files
+        };
+
+        console.log(submissionData)
+        form.reset({
+            topic: "",
+            companyInfo: "",
+            style: "AIDA",
+        });
+        setFiles(null)
+
     }
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full">
-
                 <FormField
                     control={form.control}
                     name="topic"
@@ -99,7 +130,7 @@ const TweetGenerator = () => {
                     name="companyInfo"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Upload file about your company</FormLabel>
+                            <FormLabel>Select File</FormLabel>
                             <FormControl>
                                 <FileUploader
                                     value={files}
@@ -164,7 +195,7 @@ const TweetGenerator = () => {
                         </FormItem>
                     )}
                 />
-                <Button className='w-full' type="submit">Submit</Button>
+                <Button type="submit" className="w-full">Submit</Button>
             </form>
         </Form>
     )
