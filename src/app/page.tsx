@@ -9,9 +9,7 @@ export default function Home() {
         <h1 className=" font-bold text-4xl">click of a button</h1>
       </div>
       <div className="flex  items-center justify-center ">
-        <div className="w-96 rounded-md shadow-lg p-4 border border-black">
-          <TweetGenerator />
-        </div >
+        <TweetGenerator />
       </div>
     </div>
   );
