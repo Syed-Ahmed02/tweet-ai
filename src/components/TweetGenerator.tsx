@@ -2,7 +2,7 @@
 import React from 'react'
 import { Button } from "@/components/ui/button"
 import { useState } from 'react'
-import { useChat } from 'ai/react';
+import { Skeleton } from './ui/skeleton';
 import {
     Form,
     FormControl,
@@ -36,35 +36,35 @@ import {
 } from "@/components/ui/file-upload"
 import TweetCard from './TweetCard';
 
-const STYLES = ["AIDA", "BAB", "HSO"] as const;
+const STYLES = ["Casual", "Academic", "Funny"] as const;
 const formSchema = z.object({
     topic: z.string(),
-    companyInfo: z.string(),
+    // companyInfo: z.string(),
     style: z.enum(STYLES)
 })
 
 const TweetGenerator = () => {
-    const [files, setFiles] = useState<File[] | null>(null);
+    // const [files, setFiles] = useState<File[] | null>(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [generatedTweet, setGeneratedTweet] = useState("");
 
-    const dropZoneConfig = {
-        accept: {
-            "application/pdf": [".pdf"],
-        },
-        maxFiles: 3,
-        maxSize: 1024 * 1024 * 4, multiple: true,
-    };
+    // const dropZoneConfig = {
+    //     accept: {
+    //         "application/pdf": [".pdf"],
+    //     },
+    //     maxFiles: 3,
+    //     maxSize: 1024 * 1024 * 4, multiple: true,
+    // };
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             topic: "",
-            companyInfo: "",
-            style: "AIDA",
+            // companyInfo: "",
+            style: "Casual",
         },
     })
-
+    
 
 
 
@@ -73,16 +73,17 @@ const TweetGenerator = () => {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
         //ADd error
+        setGeneratedTweet("");
         setLoading(true)
         setError('');
-        const submissionData = {
-            ...values,
-            files: files
-        };
+        // const submissionData = {
+        //     ...values,
+        //     files: files
+        // };
         try {
             const res = await fetch("/api/gemini", {
                 method: "POST",
-                body: JSON.stringify(submissionData),
+                body: JSON.stringify(values),
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -101,11 +102,11 @@ const TweetGenerator = () => {
         } finally {
             form.reset({
                 topic: "",
-                companyInfo: "",
-                style: "AIDA",
+                // companyInfo: "",
+                style: "Casual",
             });
             setLoading(false);
-            setFiles(null);
+            //setFiles(null);
         }
 
     }
@@ -118,19 +119,19 @@ const TweetGenerator = () => {
                         name="topic"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Topic</FormLabel>
+                                <FormLabel>What did you learn</FormLabel>
                                 <FormControl>
-                                    <Textarea className="w-full" placeholder="shadcn" {...field} />
+                                    <Textarea className="w-full" placeholder="Today I learnt the importance of knowledge" {...field} />
                                 </FormControl>
                                 <FormDescription>
-                                    What do you want to write about?
+                                    Tell me a bit about what you learnt today
                                 </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
 
-                    <FormField
+                    {/* <FormField
                         control={form.control}
                         name="companyInfo"
                         render={({ field }) => (
@@ -174,13 +175,13 @@ const TweetGenerator = () => {
                                 <FormMessage />
                             </FormItem>
                         )}
-                    />
+                    /> */}
                     <FormField
                         control={form.control}
                         name="style"
                         render={({ field }) => (
                             <FormItem className=''>
-                                <FormLabel>Copy Writing Styles, view them <Link href="https://drive.google.com/file/d/1rbKlglpUQBlCWDq7YGpwY64u4VhZsqHs/view" target="_blank">here</Link></FormLabel>
+                                <FormLabel>Do you want your post to be casual, academic, or funny?</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger className="">
@@ -188,22 +189,20 @@ const TweetGenerator = () => {
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="AIDA" >AIDA</SelectItem>
-                                        <SelectItem value="BAB">BAB</SelectItem>
-                                        <SelectItem value="HSO">HSO</SelectItem>
+                                        <SelectItem value="Casual" >Casual</SelectItem>
+                                        <SelectItem value="Academic">Academic</SelectItem>
+                                        <SelectItem value="Funny">Funny</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <FormDescription>
-                                    Copywriting style!
-                                </FormDescription>
+                                
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
                     <Button type="submit" className="w-full">Submit</Button>
-                </form>
+                </form>     
             </Form>
-            {loading ? <h2>true</h2> : <h2>false</h2>}
+            {loading && <Skeleton className='w-full h-64'/>}
             {generatedTweet && <TweetCard content={generatedTweet} />}
         </div>
 
