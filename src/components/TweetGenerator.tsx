@@ -1,5 +1,6 @@
 "use client"
 import React from 'react'
+import { Checkbox } from './ui/checkbox'
 import { Button } from "@/components/ui/button"
 import { useState } from 'react'
 import { Skeleton } from './ui/skeleton';
@@ -23,24 +24,16 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Textarea } from "@/components/ui/textarea";
-import Link from "next/link";
-import {
-    CloudUpload,
-    Paperclip
-} from "lucide-react"
-import {
-    FileInput,
-    FileUploader,
-    FileUploaderContent,
-    FileUploaderItem
-} from "@/components/ui/file-upload"
+
 import TweetCard from './TweetCard';
 
 const STYLES = ["Casual", "Academic", "Funny"] as const;
+const TARGETAUDIENCE = ["Beginner", "Knowledagble", "Academic"] as const
 const formSchema = z.object({
     topic: z.string(),
-    // companyInfo: z.string(),
-    style: z.enum(STYLES)
+    style: z.enum(STYLES),
+    target: z.enum(TARGETAUDIENCE),
+    generateImage: z.boolean().default(false)
 })
 
 const TweetGenerator = () => {
@@ -48,40 +41,47 @@ const TweetGenerator = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [generatedTweet, setGeneratedTweet] = useState("");
-
-    // const dropZoneConfig = {
-    //     accept: {
-    //         "application/pdf": [".pdf"],
-    //     },
-    //     maxFiles: 3,
-    //     maxSize: 1024 * 1024 * 4, multiple: true,
-    // };
+    const [generateImage, setGenerateImage] = useState(false);
+    const [imageUrl, setImageUrl] = useState("")
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             topic: "",
-            // companyInfo: "",
             style: "Casual",
+            target: "Beginner",
+            generateImage: false,
         },
     })
-    
 
-
-
+    const getImageData = async (prompt: string) => {
+        try {
+            const response = await fetch('/api/openai/dall-e', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt })
+            });
+            const { imageUrl } = await response.json();
+            setImageUrl(imageUrl);
+            setError('');
+        } catch (error) {
+            setError(`An error occurred calling the Dall-E API: ${error}`);
+        }
+    };
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         // Do something with the form values.
         // ✅ This will be type-safe and validated.
         //ADd error
         setGeneratedTweet("");
+        setImageUrl("")
         setLoading(true)
         setError('');
-        // const submissionData = {
-        //     ...values,
-        //     files: files
-        // };
+        console.log("Generate Image:",values.generateImage)
+        setGenerateImage(values.generateImage)
         try {
-            const res = await fetch("/api/gemini", {
+            const res = await fetch("/api/gemini/text", {
                 method: "POST",
                 body: JSON.stringify(values),
                 headers: {
@@ -92,21 +92,24 @@ const TweetGenerator = () => {
                 throw new Error('Network response was not ok');
             }
             const body = await res.json();
-            console.log(body);
             let generatedTweetContent = body.text;
             generatedTweetContent = generatedTweetContent?.replace(/#[\w]+/g, '');
             setGeneratedTweet(generatedTweetContent);
+
+            if (generateImage && generatedTweetContent) {
+                getImageData(generatedTweetContent).then();
+            } else {
+                setLoading(false);
+            }
         } catch (error) {
             console.error('Error:', error);
             setError('Failed to generate tweet');
         } finally {
             form.reset({
                 topic: "",
-                // companyInfo: "",
                 style: "Casual",
+                target: "Beginner"
             });
-            setLoading(false);
-            //setFiles(null);
         }
 
     }
@@ -131,51 +134,6 @@ const TweetGenerator = () => {
                         )}
                     />
 
-                    {/* <FormField
-                        control={form.control}
-                        name="companyInfo"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Select File</FormLabel>
-                                <FormControl>
-                                    <FileUploader
-                                        value={files}
-                                        onValueChange={setFiles}
-                                        dropzoneOptions={dropZoneConfig}
-                                        className="relative bg-background rounded-lg p-2"
-                                    >
-                                        <FileInput
-                                            id="fileInput"
-                                            className="outline-dashed outline-1 outline-slate-500"
-                                        >
-                                            <div className="flex items-center justify-center flex-col p-8 w-full ">
-                                                <CloudUpload className='text-gray-500 w-10 h-10' />
-                                                <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
-                                                    <span className="font-semibold">Click to upload</span>
-                                                    &nbsp; or drag and drop
-                                                </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    SVG, PNG, JPG or GIF
-                                                </p>
-                                            </div>
-                                        </FileInput>
-                                        <FileUploaderContent>
-                                            {files &&
-                                                files.length > 0 &&
-                                                files.map((file, i) => (
-                                                    <FileUploaderItem key={i} index={i}>
-                                                        <Paperclip className="h-4 w-4 stroke-current" />
-                                                        <span>{file.name}</span>
-                                                    </FileUploaderItem>
-                                                ))}
-                                        </FileUploaderContent>
-                                    </FileUploader>
-                                </FormControl>
-                                <FormDescription>Select a file to upload.</FormDescription>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    /> */}
                     <FormField
                         control={form.control}
                         name="style"
@@ -185,7 +143,7 @@ const TweetGenerator = () => {
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger className="">
-                                            <SelectValue placeholder="AIDA" />
+                                            <SelectValue placeholder="Casual" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
@@ -194,16 +152,56 @@ const TweetGenerator = () => {
                                         <SelectItem value="Funny">Funny</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                
+
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
+                    <FormField
+                        control={form.control}
+                        name="target"
+                        render={({ field }) => (
+                            <FormItem className=''>
+                                <FormLabel>How Knowledagble is the target audience about the subject?</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="">
+                                            <SelectValue placeholder="Beginner" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Beginner" >Beginner</SelectItem>
+                                        <SelectItem value="Knowledagble">Knowledagble</SelectItem>
+                                        <SelectItem value="Academic">Academic</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="generateImage"
+                        render={({ field }) => (
+                            <FormItem className='flex flex-row items-center space-x-2 space-y-0'>
+                                <FormControl className="">
+                                    <Checkbox id="generateImage" checked={field.value} onCheckedChange={field.onChange} />
+                                </FormControl>
+                                <FormLabel
+                                    htmlFor="generateImage"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Generate Image
+                                </FormLabel>
+                            </FormItem>
+                        )}
+                    />
                     <Button type="submit" className="w-full">Submit</Button>
-                </form>     
+                </form>
             </Form>
-            {loading && <Skeleton className='w-full h-64'/>}
-            {generatedTweet && <TweetCard content={generatedTweet} />}
+            {loading && <Skeleton className='w-full h-64' />}
+            {generatedTweet && <TweetCard text={generatedTweet} imageUrl={imageUrl} />}
         </div>
 
     )

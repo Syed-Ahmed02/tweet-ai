@@ -10,11 +10,14 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Button } from './ui/button';
+import Image from 'next/image';
 interface TweetCardProps {
-    content: string;
+    text: string;
+    imageUrl?: string;
 }
 
-const TweetCard: React.FC<TweetCardProps> = ({ content }) => {
+
+const TweetCard: React.FC<TweetCardProps> = ({ text, imageUrl }) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const copyToClipboard = async (text: string) => {
@@ -36,13 +39,16 @@ const TweetCard: React.FC<TweetCardProps> = ({ content }) => {
     // );
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Thread</CardTitle>
-                <CardDescription>Here is the generated Thread</CardDescription>
-                <Button className='outline' onClick={() => copyToClipboard(content)}>{isCopied ? "Copied!" : "Copy"}</Button>
+            <CardHeader className='flex flex-row justify-between items-end'>
+                <div>
+                    <CardTitle>Post</CardTitle>
+                    <CardDescription>Here is the generated Post</CardDescription>
+                </div>
+                <Button variant="outline" className='mt-0' onClick={() => copyToClipboard(text)}>{isCopied ? "Copied!" : "Copy"}</Button>
             </CardHeader>
-            <CardContent>
-                <p>{content}</p>
+            <CardContent className='flex flex-col space-y-2'>
+                <p className='text-md'>{text}</p>
+                {imageUrl && <Image src={imageUrl} height={300} width={300} alt="generated image" />}
             </CardContent>
 
         </Card>
