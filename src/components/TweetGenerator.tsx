@@ -55,14 +55,17 @@ const TweetGenerator = () => {
 
     const getImageData = async (prompt: string) => {
         try {
-            const response = await fetch('/api/openai/dall-e', {
+            const res = await fetch('/api/openai/dall-e', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ prompt })
             });
-            const { imageUrl } = await response.json();
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const { imageUrl } = await res.json();
             setImageUrl(imageUrl);
             setError('');
         } catch (error) {
@@ -78,7 +81,7 @@ const TweetGenerator = () => {
         setImageUrl("")
         setLoading(true)
         setError('');
-        console.log("Generate Image:",values.generateImage)
+        console.log("Generate Image:", values.generateImage)
         setGenerateImage(values.generateImage)
         try {
             const res = await fetch("/api/gemini/text", {
@@ -201,6 +204,7 @@ const TweetGenerator = () => {
                 </form>
             </Form>
             {loading && <Skeleton className='w-full h-64' />}
+            {error && <p>ann error occured {error}</p>}
             {generatedTweet && <TweetCard text={generatedTweet} imageUrl={imageUrl} />}
         </div>
 

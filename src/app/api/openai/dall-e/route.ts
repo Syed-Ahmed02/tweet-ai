@@ -21,7 +21,6 @@ export async function POST(req: Request, res: Response) {
   const { prompt } = JSON.parse(body);
   const finalPrompt = `Create me an image related to the following content ---- ${prompt}`
   try {
-    // Ask Dall-E to generate an image based on the prompt
     const response = await openai.images.generate({
       model: "dall-e-3",
       prompt: finalPrompt,
@@ -30,7 +29,9 @@ export async function POST(req: Request, res: Response) {
     });
     const imageUrl = response?.data?.[0]?.url;
     console.log('imageUrl:', imageUrl);
-    return NextResponse.json({ imageUrl });
+    return NextResponse.json({ imageUrl },{
+      status:200
+    });
   } catch (error: any) {
     console.error(error);
     return new Response(error?.message || error?.toString(), {
