@@ -1,6 +1,6 @@
 # Next.js Project
 
-This project was bootstrapped with XYcreate-next-appXY, providing a robust foundation for building scalable web applications.
+This project was bootstrapped with `create-next-app`, providing a robust foundation for building scalable web applications.
 
 ## 🚀 Getting Started
 
