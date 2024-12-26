@@ -12,6 +12,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
+import { Input } from './ui/input';
 import {
     Select,
     SelectContent,
@@ -25,13 +26,13 @@ import { z } from "zod"
 import { Textarea } from "@/components/ui/textarea";
 import TweetCard from './TweetCard';
 
-const STYLES = ["Casual", "Academic", "Funny"] as const;
-const TARGETAUDIENCE = ["Beginner", "Knowledgeable", "Academic"] as const;
+const STYLES = ["Casual", "Academic", "Funny", "Other"] as const;
+const TARGETAUDIENCE = ["Beginner", "Knowledgeable", "Academic","Other"] as const;
 
 const formSchema = z.object({
     topic: z.string().min(1, "Please enter what you learned"),
-    style: z.enum(STYLES),
-    target: z.enum(TARGETAUDIENCE),
+    style: z.enum(STYLES).or(z.string().min(1,"Please set a custom style")),
+    target: z.enum(TARGETAUDIENCE).or(z.string().min(1,"Please set a custom Target Audience")),
     generateImage: z.boolean().default(false)
 });
 
@@ -42,6 +43,8 @@ const TweetGenerator = () => {
     const [loading, setLoading] = useState(false);
     const [generatedTweet, setGeneratedTweet] = useState("");
     const [imageUrl, setImageUrl] = useState("");
+    const [customStyle,setCustomStyle] = useState("")
+    const [customTargetAudience, setCustomTargetAudience] = useState("")
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -78,6 +81,14 @@ const TweetGenerator = () => {
         setImageUrl("");
         setError('');
 
+        if(values.style === "Other"){
+            values.style=customStyle
+        }
+
+        if (values.target === "Other"){
+            values.style=customTargetAudience
+        }
+
         try {
             const res = await fetch("/api/gemini/text", {
                 method: "POST",
@@ -112,10 +123,12 @@ const TweetGenerator = () => {
             target: "Beginner",
             generateImage: false
         });
+        setCustomStyle("")
+        setCustomTargetAudience("")
     };
 
     return (
-        <div className="w-96 rounded-md shadow-lg p-4 border border-black space-y-8">
+        <div className="w-3/4 lg:w-2/4 rounded-md shadow-lg p-4 border border-black space-y-8">
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-full">
                     <FormField
@@ -152,6 +165,8 @@ const TweetGenerator = () => {
                                             <SelectItem key={style} value={style}>{style}</SelectItem>
                                         ))}
                                     </SelectContent>
+                                    {field.value === "Other" && <Input placeholder="enter your own style!" value={customStyle} onChange={(e) => setCustomStyle(e.target.value)} />}
+
                                 </Select>
                                 <FormMessage />
                             </FormItem>
@@ -175,6 +190,13 @@ const TweetGenerator = () => {
                                             <SelectItem key={audience} value={audience}>{audience}</SelectItem>
                                         ))}
                                     </SelectContent>
+                                    {field.value === "Other" && 
+                                        <Input 
+                                            placeholder="enter your own target audience!"
+                                            value={customTargetAudience} 
+                                            onChange={(e) => setCustomTargetAudience(e.target.value)} 
+                                        />}
+
                                 </Select>
                                 <FormMessage />
                             </FormItem>

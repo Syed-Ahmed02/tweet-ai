@@ -6,7 +6,8 @@ export const runtime = "edge";
 export async function POST(req: Request) {
   try {
     const { topic, style,target } = await req.json()
-    const systemMessage = `You are a professional Social media copywritter specializing in X (formally twitter). 
+    console.log(style)
+    const systemMessage = `You are a professional copywritter specializing in writing X Posts (formally twitter). 
     I will provide you with a subject I learnt today, as well as a style and I want you to create me a X post in order to publish. The objective of the post is to share knowledge with the world. Keep the character limit less then 280 words, I only want one single post`;
 
     const prompt = `Create me a post on ${topic} using a ${style} writing style. Assume the target audience is ${target} when it comes to this subject`;
